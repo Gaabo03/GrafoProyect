@@ -1,13 +1,17 @@
 #include "Grafo.h"
 
+//Constructor por defecto
 template <typename T>
-Grafo<T>::Grafo() {}
+Grafo<T>::Grafo() {} 
 
+//Destructor que limpia las estructuras de datos.
 template <typename T>
 Grafo<T>::~Grafo() {
     matriz.clear();
     idsVertices.clear();
 }
+
+// Busca el indice de un elemento en el vector idsVertices.
 template <typename T>
 int Grafo<T>::encontrarIndice(const T& ele) {
     for (size_t i = 0; i < idsVertices.size(); ++i) {
@@ -18,13 +22,12 @@ int Grafo<T>::encontrarIndice(const T& ele) {
     return -1; // Retornar -1 si el elemento no se encuentra
 }
 
+// Crea la matriz de adyacencia del grafo a partir de los vectores de ids de origen, ids de destino y pesos de las aristas.
 template <typename T>
 void Grafo<T>::crearMatriz(int numAristas, const std::vector<T>& idsOrigen, const std::vector<T>& idsDestino, const std::vector<int>& pesos) {
-    if(idsOrigen.size() != numAristas || idsDestino.size() != numAristas || pesos.size() != numAristas) {
-        std::cerr << "Error: los tama�os de los vectores no coinciden con el n�mero de aristas.\n";
-        return;
-    }
-
+	matriz.clear();
+    idsVertices.clear();
+    
     for (int i = 0; i < numAristas; i++) {
         T idOrigen = idsOrigen[i];
         T idDestino = idsDestino[i];
@@ -52,38 +55,41 @@ void Grafo<T>::crearMatriz(int numAristas, const std::vector<T>& idsOrigen, cons
         if (indiceOrigen < idsVertices.size() && indiceDestino < idsVertices.size()) {
             matriz[indiceOrigen][indiceDestino] = peso;
         } else {
-            std::cerr << "Error: uno o ambos IDs de v�rtices no existen.\n";
+            std::cerr << "Error: uno o ambos IDs de vertices no existen.\n";
         }
     }
 }
 
+// Verifica si un vertice existe en el grafo.
 template <typename T>
 bool Grafo<T>::buscarVertice(const T &id) {
     return encontrarIndice(id) != -1;
 }
 
+// Verifica si una arista existe entre dos vertices.
 template <typename T>
 bool Grafo<T>::buscarArista(const T &idOrigen, const T &idDestino) {
     int indiceOrigen = encontrarIndice(idOrigen);
     int indiceDestino = encontrarIndice(idDestino);
 
     if (indiceOrigen == -1 || indiceDestino == -1) {
-        return false; // uno o ambos v�rtices no existen
+        return false; 
     }
 
-    return matriz[indiceOrigen][indiceDestino] != 0; // existe una arista si el peso es diferente de 0
+    return matriz[indiceOrigen][indiceDestino] != 0;
 }
 
+// Imprime la matriz de adyacencia del grafo.
 template <typename T>
 void Grafo<T>::imprimir() {
-    std::cout << "  ";
+    std::cout << "\n\t\t  ";
     for (int i = 0; i < idsVertices.size(); ++i) {
         std::cout << idsVertices[i] << " ";
     }
     std::cout << "\n";
 
     for (int i = 0; i < idsVertices.size(); ++i) {
-        std::cout << idsVertices[i] << " ";
+        std::cout << "\t\t" << idsVertices[i] << " ";
         for (int j = 0; j < idsVertices.size(); ++j) {
             std::cout << matriz[i][j] << " ";
         }
@@ -91,23 +97,24 @@ void Grafo<T>::imprimir() {
     }
 }
 
+// Elimina un vertice y todas sus aristas asociadas del grafo.
 template <typename T>
 void Grafo<T>::eliminar(const T &ele) {
     int idx = encontrarIndice(ele);
     if (idx == -1) return;
-
-    // Eliminar el vértice de la lista de IDs de vértices
+    
     idsVertices.erase(idsVertices.begin() + idx);
-
-    // Eliminar la fila y columna del vértice en la matriz de adyacencia
     matriz.erase(matriz.begin() + idx);
+    
     for (int i = 0; i < matriz.size(); ++i) {
         matriz[i].erase(matriz[i].begin() + idx);
     }
 }
 
+// Implementa el algoritmo de Dijkstra para encontrar la ruta minima entre dos vertices.
 template <typename T>
 int Grafo<T>::rutaMinima(const T &ori, const T &des) {
+	
     std::vector<Nodo<T> > distancias(idsVertices.size());
     for (size_t i = 0; i < idsVertices.size(); ++i) {
         distancias[i].id = idsVertices[i];
@@ -136,19 +143,22 @@ int Grafo<T>::rutaMinima(const T &ori, const T &des) {
 
     for (size_t i = 0; i < idsVertices.size(); ++i) {
         if (distancias[i].id == des) {
-            return distancias[i].distancia;
+        	if (distancias[i].distancia == INT_MAX){
+        		return -1;
+			} else {
+				return distancias[i].distancia;
+			}
         }
     }
 
-    return -1; // Retornar -1 si no se encuentra una ruta
+    return -1;
 }
 
+//Verifica si el grafo es fuertemente conexo utilizando el algoritmo de Warshall.
 template <typename T>
 bool Grafo<T>::esFuertementeConexo() {
-    // Aplicar el algoritmo de Warshall para obtener la matriz de cierre transitivo
     std::vector<std::vector<bool> > cierreTransitivo(idsVertices.size(), std::vector<bool>(idsVertices.size(), false));
 
-    // Inicializar la matriz de cierre transitivo con las aristas existentes en el grafo
     for (int i = 0; i < idsVertices.size(); ++i) {
         for (int j = 0; j < idsVertices.size(); ++j) {
             if (matriz[i][j] != 0) {
@@ -157,7 +167,6 @@ bool Grafo<T>::esFuertementeConexo() {
         }
     }
 
-    // Calcular la matriz de cierre transitivo
     for (int k = 0; k < idsVertices.size(); ++k) {
         for (int i = 0; i < idsVertices.size(); ++i) {
             for (int j = 0; j < idsVertices.size(); ++j) {
@@ -166,7 +175,6 @@ bool Grafo<T>::esFuertementeConexo() {
         }
     }
 
-    // Verificar si la matriz de cierre transitivo no contiene ceros arriba y abajo de la diagonal principal
     for (int i = 0; i < idsVertices.size(); ++i) {
         for (int j = 0; j < idsVertices.size(); ++j) {
             if (i != j && !cierreTransitivo[i][j]) {
@@ -174,10 +182,10 @@ bool Grafo<T>::esFuertementeConexo() {
             }
         }
     }
-
     return true;
 }
 
+//Encuentra y muestra todos los vertices que son pozos (vertices sin aristas salientes).
 template <typename T>
 void Grafo<T>::obtenerVerticesPozos() {
     std::vector<T> verticesPozos;
@@ -194,14 +202,18 @@ void Grafo<T>::obtenerVerticesPozos() {
             verticesPozos.push_back(idsVertices[i]);
         }
     }
-
-    std::cout << "Vertices pozos: ";
-    for (int i = 0; i < verticesPozos.size(); i++){
-        std::cout << verticesPozos[i] << " ";
-    }
-    std::cout << std::endl;
+	
+	if (!verticesPozos.empty()){
+		std::cout << "\tVertices pozos: ";
+	    for (int i = 0; i < verticesPozos.size(); i++){
+	        std::cout << verticesPozos[i] << " ";
+	    }
+	    std::cout << std::endl;
+	}
+    
 }
 
+// Encuentra y muestra todos los vertices que son fuentes (vertices sin aristas entrantes).
 template <typename T>
 void Grafo<T>::obtenerVerticesFuentes() {
     std::vector<T> verticesFuentes;
@@ -219,9 +231,11 @@ void Grafo<T>::obtenerVerticesFuentes() {
         }
     }
 
-    std::cout << "Vertices fuentes: ";
-    for (int i = 0; i < verticesFuentes.size(); i++) {
-        std::cout << verticesFuentes[i] << " ";
-    }
-    std::cout << std::endl;
+	if (!verticesFuentes.empty()){
+	    std::cout << "\tVertices fuentes: ";
+	    for (int i = 0; i < verticesFuentes.size(); i++) {
+	        std::cout << verticesFuentes[i] << " ";
+	    }
+	    std::cout << std::endl;
+	}
 }
